@@ -1,0 +1,144 @@
+#PART1
+#char junk;
+li $t4,0
+#getting the addresses to registers
+lui $t0,0xBF80
+ori $t1,$t0,0x5A00 
+
+#preparation for SPI2CONbits.ON = 0;
+li $t2,0XFFFF7FFFF
+lw $t3,0($t1)
+and $t3,$t3,$t2 
+
+#SPI2CONbits.ON = 0;
+sw $t3,0($t1)
+
+#junk = SPI2BUF;
+ lw $t4,5A20($t0)
+
+#preparation for SPI2BRG = 7;
+ li $t5,7
+
+# SPI2BRG = 7;
+ sw $t5,5A30($t0)
+
+#preparation for SPI2CONbits.MSTEN = 1;
+lw $t3,0($t1)
+ori $t3,$t3,0x0200
+
+#SPI2CONbits.MSTEN = 1;
+sw $t3,0($t1)
+
+#preparation for SPI2CONbits.CKE = 1;
+lw $t3,0($t1)
+ori $t3,$t3,0x0100
+
+#SPI2CONbits.CKE = 1;
+sw $t3,0($t1)
+
+#while(!SPI2CONbits.SSEN);
+while:
+lw $t3,0($t1)
+andi $t3,$t3,0x0080
+beq $t3,$0,while
+
+exit:
+lw $t3,0($t1)
+ori $t3,$t3,0x8000
+
+#SPI2CONbits.ON = 1;
+sw $t3,0($t1)
+
+jr $ra
+#END OF PART 1
+
+#PART2
+#int stop = 0;
+li $t0,0
+#int initial = 0b01110111
+li $t1,0x77 
+# int right = 1;
+li $t2,1
+main:
+#getting the addresses into the registers
+lui $t4,BF88
+ori $t5,$t4,0x60C0
+#getting the value at TRISD and setting it to 0
+lw $t6,0($t5)
+andi $t6,$t6,0x0000
+#TRISD = 0x0;
+sw $t6,0($t5)
+
+#int x = 0b111
+li $t5,0x7
+
+#TRISA = 0b111
+sw $t5,6000($t4)
+
+# PORTD = initial;
+sw $t1,60D0($t4)
+
+while:
+
+#int lsb;
+li $t7,0
+#int mask;
+li $t8,0
+
+#int x = get porta
+lw $t5,6010($t4)
+#int x = PORTABits.RA1
+andi $t5,$t5,0x0002
+
+#if(PORTABits.RA1 == 0)
+if:
+bne $t5,0,continue
+#stop = !stop;
+xor $t0,$t0,0x1
+
+#if(!stop)
+bne $t0,0,continue
+# PORTD = initial;
+sw $t1,60D0($t4)
+
+#if(!stop)
+continue:
+bne $t0,0,continue2
+#int x = getPORTD
+lw $t9,60D0($t4)
+#lsb = PORTD & 0x1;
+andi $t7,$t9,0x1
+#mask = lsb << 7;
+sll $t8,$t7,7
+# prep for PORTD = (PORTD >> 1) | mask;
+srl $t9,$t9,1
+or $t9,$t9,$t8
+# PORTD = (PORTD >> 1) | mask;
+sw $t9,60D0($t4)
+j exitifelse
+
+#else
+continue2:
+#int x = 0b11111111;
+li $t9,0xFF
+#PORTD = 0b11111111;
+sw $t9,60D0($t4)
+
+
+exitifelse:
+#prep for jal to delay_ms
+subi $sp,sp,8
+sw $a0,4($sp)
+sw $ra,0($sp)
+li $a0,1000
+#delay_ms(1000);
+jal delay_ms
+#getting the values back
+lw $a0,4($sp)
+lw $ra,0($sp)
+addi $sp,$sp,8
+j while
+
+exit:
+jr $ra
+#END OF PART2

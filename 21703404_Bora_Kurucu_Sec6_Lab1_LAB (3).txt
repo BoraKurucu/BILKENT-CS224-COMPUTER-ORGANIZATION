@@ -1,0 +1,609 @@
+##
+## Program1.asm - prints out "hello world"
+##
+##	a0 - points to the string
+##
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text		
+	.globl __start 
+
+__start:		# execution starts here
+	la $a0,str	# put string address into a0
+	li $v0,4	# system call to print
+	syscall		#   out a string
+
+	li $v0,10  # system call to exit
+	syscall	#    bye bye
+
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+str:	.asciiz "Alican Büyükçakýr\n"
+n:	.word	10
+
+##
+## end of file Program1.asm
+
+##
+## Program2.asm asks user for temperature in Celsius,
+##  converts to Fahrenheit, prints the result.
+##
+##	v0 - reads in Celsius
+##	t0 - holds Fahrenheit result
+##	a0 - points to output strings
+##
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text		
+	.globl __start	
+
+__start:
+	la $a0,prompt	# output prompt message on terminal
+	li $v0,4	# syscall 4 prints the string
+	syscall
+
+	li $v0, 5	# syscall 5 reads an integer
+	syscall
+
+	mul $t0,$v0,9	# to convert,multiply by 9,
+	div $t0,$t0,5	# divide by 5, then
+	add $t0,$t0,32	# add 32
+
+	la $a0,ans1	# print string before result
+	li $v0,4
+	syscall
+
+	move $a0,$t0	# print integer result
+	li $v0,1		# using syscall 1
+	syscall
+
+	la $a0,endl	# system call to print
+	li $v0,4		# out a newline
+	syscall
+
+	li $v0,10		# system call to exit
+	syscall		#    bye bye
+
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+prompt:	.asciiz "Enter temperature (Celsius): "
+ans1:	.asciiz "The temperature in Fahrenheit is "
+endl:	.asciiz "\n"
+
+##
+## end of file Program2.asm
+
+##
+##	Program3.asm is a loop implementation
+##	of the Fibonacci function
+##        
+
+#################################
+#					 	#
+#		text segment		#
+#						#
+#################################
+
+	.text		
+.globl __start
+ 
+__start:		# execution starts here
+	li $a0,7	# to calculate fib(7)
+	jal fib		# call fib
+	move $a0,$v0	# print result
+	li $v0, 1
+	syscall
+
+	la $a0,endl	# print newline
+	li $v0,4
+	syscall
+
+	li $v0,10
+	syscall		# bye bye
+
+#------------------------------------------------
+
+
+fib:	move $v0,$a0	# initialise last element
+	blt $a0,2,done	# fib(0)=0, fib(1)=1
+
+	li $t0,0	# second last element
+	li $v0,1	# last element
+
+loop:	add $t1,$t0,$v0	# get next value
+	move $t0,$v0	# update second last
+	move $v0,$t1	# update last element
+	sub $a0,$a0,1	# decrement count
+	bgt $a0,1,loop	# exit loop when count=0
+done:	jr $ra
+
+#################################
+#					 	#
+#     	 data segment		#
+#						#
+#################################
+
+	.data
+endl:	.asciiz "\n"
+
+##
+## end of Program3.asm
+.data
+aEnt:.asciiz "\nEnter a\n"
+bEnt:.asciiz "\nEnter b\n"
+cEnt:.asciiz "\nEnter c\n"
+dEnt:.asciiz "\nEnter d\n"
+newLine: .asciiz "\n"
+loy: .asciiz "\nloy\n"
+.text
+
+
+    li $v0, 4
+    la $a0, aEnt
+    syscall 
+    li $v0, 5
+    syscall
+    move $t0, $v0
+
+    li $v0, 4
+    la $a0, bEnt
+    syscall 
+    li $v0, 5
+    syscall
+    move $t1, $v0
+    
+    li $v0, 4
+    la $a0, cEnt
+    syscall 
+    
+    li $v0, 5
+    syscall
+    move $t2, $v0
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+    li $v0, 4
+    la $a0, dEnt
+    syscall 
+    
+    li $v0, 5
+    syscall
+    move $t3, $v0
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+   #3b
+    mul $t1,$t1,3
+    li $v0, 1
+    move $a0, $t1
+    syscall
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+    #(a+3b)
+    add $t0,$t0,$t1
+    li $v0, 1
+    move $a0, $t0
+    syscall
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+    #(3(a+3b))
+    mul $t0,$t0,3
+    li $v0, 1
+    move $a0, $t0
+    syscall
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+   
+   #(3(a+3b)*c)
+    mul $t0,$t0,$t2
+    li $v0, 1
+    move $a0, $t0
+    syscall
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+    #(3(a+3b)*c/4)
+    div $t0,$t0,4
+    li $v0, 1
+    move $a0, $t0
+    syscall
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+   #(3(a+3b)*c/4)%4
+    div $t0,$t3
+    mfhi $t4
+
+   #printing the result
+    finish:
+    li $v0, 4
+    la $a0, newLine
+    syscall 
+    
+     li $v0, 1
+    move $a0, $t4
+    syscall 
+ .data 
+array:  .space 400
+numb: .asciiz "\n Enter array's size: "
+entEl: .asciiz "\nEnter the elements:\n"
+newLine: .asciiz "\n"
+ýnput: .asciiz "\nEnter the numbet o see the sum of the numbers bigger than it\n"
+sum: .asciiz "\n The result is  \n"
+ýnfor: .asciiz "\n ýn for \n"
+menu: .asciiz "\n \n Type 1 to find greater \n 2 to find sum in range \n 3 to see number of elements divisible by some number \n 4 to number of unique elemnts \n 5 to quit\n"
+entAr: .asciiz "\n Enter array elements \n"
+ýnput2: .asciiz "\nEnter the greater number\n"
+ýnput3: .asciiz "\nEnter the lesser number\n"
+ýnput4: .asciiz "\nEnter the number the divisor \n"
+
+.globl main
+.text
+main:
+
+  #make user enter the size
+   li $v0,4
+   la $a0,numb
+   syscall
+   
+   #get the size
+   li $v0,5
+   syscall
+   
+   addi $sp,$sp,-28
+   
+   #store the result
+   move $s1,$v0
+   
+   addi $s4,$s1,0
+   addi $t5,$s4,0
+   
+   
+   #sum
+   li $t6,0
+   
+   sw $s0,4($sp)
+   sw $s1,8($sp)
+   sw $s2,12($sp)
+   sw $s3,16($sp)
+   sw $s5,20($sp)
+   sw $s6,24($sp)
+   sw $s7,28($sp)
+   
+   la $s0,array
+   la $s2,array
+   la $s6,array
+   la $s3,array
+   la $s7,array
+   la $s5,array
+   
+     li $v0,4
+   la $a0,entAr
+   syscall
+    
+   
+   while: 
+    
+    #loop exit condition
+    beq $s1,0,main2
+    
+    #get integer from user
+    li $v0, 5
+    syscall
+    
+    
+    #put it into array
+    sw $v0,0($s0)
+    
+    #increment the memory adress for the next input
+    addi $s0,$s0,4
+    addi $s6,$s6,4
+
+    #decrement to finish the loop (i-- in c code)
+    subi $s1,$s1,1
+    
+    j while
+    
+   main2:
+   
+   li $t6,0
+    
+   addi $t5,$s4,0
+   addi $s0,$s6,0
+   
+   la $s2,array
+    
+    li $v0,4
+   la $a0,menu
+   syscall
+   
+   li $v0,5
+   syscall
+   
+   move $s1,$v0
+   
+   beq $s1,1,partAInput
+   beq $s1,2,partBinput
+   beq $s1,3,partCinput
+   beq $s1,4,partDfor
+   beq $s1,5,quit
+   
+   partAInput:
+   #make user enter the input
+   li $v0,4
+   la $a0,ýnput
+   syscall
+   
+   #get the input
+   li $v0,5
+   syscall
+   
+   #store the input
+   move $t8,$v0
+   partAfor:
+   
+   
+   #li $v0,4
+   #la $a0,ýnfor
+   #syscall
+   
+   beq $t5,0,partAexit
+   lw $t7,0($s2)
+   
+    addi $s2,$s2,4
+   subi $t5,$t5,1
+   
+   bgt $t7,$t8,partAadder
+  
+    j partAfor
+ 
+   partAexit:
+   
+    #make user enter the input
+   li $v0,4
+   la $a0,sum
+   syscall
+   
+    # Printing out the number
+    li $v0, 1
+    move $a0, $t6
+    syscall
+    
+     li $t6,0
+    
+  jal main2
+    
+   partAadder:
+   add $t6,$t6,$t7
+   j partAfor
+   
+ partBinput:
+   
+    #make user enter the input
+   li $v0,4
+   la $a0,ýnput2
+   syscall
+   
+   #get the input
+   li $v0,5
+   syscall
+   
+   #store the input
+   move $t8,$v0
+   
+    #make user enter the input
+   li $v0,4
+   la $a0,ýnput3
+   syscall
+   
+   #get the input
+   li $v0,5
+   syscall
+   
+   #store the input
+   move $t2,$v0
+   partBfor:
+   
+   
+   #li $v0,4
+   #la $a0,ýnfor
+   #syscall
+   
+   beq $t5,0,partBexit
+   lw $t7,0($s2)
+   
+    addi $s2,$s2,4
+   subi $t5,$t5,1
+   
+   blt $t7,$t8,partBadder
+  
+    j partBfor
+ 
+   partBexit:
+   
+    #make user enter the input
+   li $v0,4
+   la $a0,sum
+   syscall
+   
+    # Printing out the number
+    li $v0, 1
+    move $a0, $t6
+    syscall
+    
+     li $t6,0
+   jal main2
+
+partBadder:
+bgt $t7,$t2,partBadder2
+j partBfor
+   
+   partBadder2:
+   add $t6,$t6,$t7
+   j partBfor
+   
+partCinput:
+ #make user enter the input
+   li $v0,4
+   la $a0,ýnput4
+   syscall
+   
+   #get the input
+   li $v0,5
+   syscall
+   
+   #store the input
+   move $t8,$v0
+ partCfor:
+   
+ #  li $v0,4
+ #  la $a0,ýnfor
+  # syscall
+   
+   beq $t5,0,partCexit
+   lw $t7,0($s2)
+   
+    addi $s2,$s2,4
+   subi $t5,$t5,1
+   
+   #t7 divident
+   #t8 divisor
+   jal partCdivide
+    j partCfor
+ 
+   partCexit:
+   
+    #make user enter the input
+   li $v0,4
+   la $a0,sum
+   syscall
+   
+    # Printing out the number
+    li $v0, 1
+    move $a0, $t6
+    syscall
+    
+    
+   jal main2
+partCdivide:
+
+beq $t7,0,partCfinish
+blt $t7,0,partCfinish2
+sub $t7,$t7,$t8
+
+j partCdivide
+
+partCfinish:
+add $t6,$t6,1
+j partCfor
+
+partCfinish2:
+j partCfor
+
+   partDfor:
+   
+   beq $t5,1, partDexit
+   subi $t5,$t5,1
+   addi $s7,$s7,4
+   
+   jal  partDcheckDist
+   
+   j  partDfor
+  
+    partDcheckDist:
+   
+   lw $t1,0($s5)
+   lw $t0,0($s7)
+   #all the analysis is done, no copy found so add
+   beq $s5,$s7,adderD
+   #if they are equal then it is not unique
+   beq $t1,$t0,finishD
+ 
+   addi $s5,$s5,4
+   j  partDcheckDist
+   
+   #adding to result
+   adderD:
+   addi $t6,$t6,1
+   la $s5,array
+   j  partDfor
+   
+   
+   finishD:
+   la $s5,array
+   j  partDfor
+   
+    partDexit:
+   
+    #make user enter the input
+   li $v0,4
+   la $a0,sum
+   syscall
+   
+   addi $t6,$t6,1
+   
+    # Printing out the number
+    li $v0, 1
+    move $a0, $t6
+    syscall
+    
+   jal main2
+
+quit:
+    #restroing old values
+    lw $s0,4($sp)
+    lw $s1,8($sp)
+    lw $s2,12($sp)
+    lw $s3,16($sp)
+    lw $s5,20($sp)
+    lw $s6,24($sp)
+    lw $s7,28($sp)
+    
+    addi $sp,$sp,28
+    
+ li $v0,10
+syscall
+
+
+   
+   
+   
+   
+      
+   
+    
+    
+    
+
+

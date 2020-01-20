@@ -1,0 +1,130 @@
+// 
+// Create Date: 04.04.2019 01:09:15
+// Design Name: 
+// Module Name: testbench
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module testbench(
+
+    );
+   logic clk;
+   logic reset;
+   logic [31:0] writedata;
+   logic [31:0] dataadr;
+   logic  memwrite;
+   logic [31:0] pc;
+   logic [31:0] instr;
+   logic bgt;
+   logic jalr;
+  logic [31:0] rf [31:0];
+    top top(clk,reset,writedata,dataadr,memwrite,pc,instr,bgt,jalr,rf);
+initial begin
+    //  jalr = 1;
+      reset = 1;
+      clk = 0;
+   //   bgt = 0;
+      #5;
+     reset = 0;
+      #50;
+      end
+      
+always  begin
+       clk = ~clk; #10;
+     //  bgt = ~bgt; #10;
+     //  jalr = ~jalr ; #10;
+       end
+endmodule
+module maindec (input logic[5:0] op,
+ output logic memtoreg1,
+ output logic memtoreg0,
+ output logic memwrite, branch,
+ output logic alusrc, regdst, regwrite, jump,
+ output logic[1:0] aluop , 
+ output logic bgt, 
+ output logic jalr);
+
+   logic [11:0] controls;
+
+ assign {regwrite, regdst, alusrc, branch, memwrite, 
+ memtoreg1,memtoreg0, aluop, jump,bgt,jalr} = controls;
+
+
+
+  always_comb
+    case(op)
+    6'b000000: controls <= 12'b110000100000; //Rtype
+    6'b100011: controls <= 12'b101000100000; //LW
+    6'b101011: controls <= 12'b001010000000; //SW
+    6'b000100: controls <= 12'b000100000000; //BEQ
+    6'b001000: controls <= 12'b101000000000; //ADDI
+    6'b000010: controls <= 12'b000000010000; //J
+    6'b000011: controls <= 12'b000100000010; //BGT
+    6'b000111: controls <= 12'b100001010001; //JALR
+    default: controls <=   12'b000000000000; //illegal op
+    endcase
+endmodule
+
+
+module top  (input   logic 	 clk, reset,           
+	     output  logic[31:0] writedata, dataadr,            
+	     output  logic memwrite,
+	     output logic [31:0] pc,
+	       output logic [31:0] instr,
+	     output logic bgt,output logic jalr,
+	     output  logic [31:0] rf [31:0]);
+
+   logic [31:0] readdata;    
+
+   // instantiate processor and memories  
+   mips mips (clk, reset, pc, instr, memwrite, dataadr, writedata, readdata,bgt,jalr,rf);  
+   imem imem (pc[7:2], instr);  
+   dmem dmem (clk, memwrite, dataadr, writedata, readdata);
+
+endmodule
+// External instruction memory used by MIPS single-cycle
+// processor. It models instruction memory as a stored-program 
+// ROM, with address as input, and instruction as output
+
+
+module imem ( input logic [5:0] addr, output logic [31:0] instr);
+
+// imem is modeled as a lookup table, a stored-program byte-addressable ROM
+	always_comb
+	   case ({addr,2'b00})		   	// word-aligned fetch
+//		address		instruction
+//		-------		-----------
+		8'h00: instr = 32'h20020005;  	// disassemble, by hand 
+		8'h04: instr = 32'h2003000c;  	// or with a program,
+		8'h08: instr = 32'h2067fff7;  	// to find out what
+		8'h0c: instr = 32'h00e22025;  	// this program does!
+		8'h10: instr = 32'h00642824;
+		8'h14: instr = 32'h00a42820;
+		8'h18: instr = 32'h10a7000a;
+		8'h1c: instr = 32'h0064202a;
+		8'h20: instr = 32'h10800001;
+		8'h24: instr = 32'h20050000;
+		8'h28: instr = 32'h00e2202a;
+		8'h2c: instr = 32'h00853820;
+		8'h30: instr = 32'h00e23822;
+		8'h34: instr = 32'hac670044;
+		8'h38: instr = 32'h8c020050;
+		8'h3c: instr = 32'h08000011;
+		8'h40: instr = 32'h20020001;
+		8'h44: instr = 32'hac020054;
+		8'h48: instr = 32'h08000012;
+	
+	     default:  instr = {32{1'bx}};	// unknown address
+	   endcase
+endmodule

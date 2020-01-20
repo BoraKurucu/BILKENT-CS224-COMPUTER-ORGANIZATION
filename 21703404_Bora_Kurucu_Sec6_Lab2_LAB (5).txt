@@ -1,0 +1,403 @@
+.data
+getIn: .asciiz "\nEnter arrays size:\n"
+entAr: .asciiz "\nEnter element:\n"
+error: .asciiz "\nThis value cant be added\n"
+added: .asciiz"\nValue added.\n"
+menu: .asciiz "\nEnter 1 to enter a new array\n2 to sort the last entered array insertionly\n3 to find the median value of the last entered array, to find mode\n 4 to exit\n"
+inpart2:.asciiz "\n Array is sorted \n"
+mode:.asciiz "\nMode of the array is: \n"
+median:.asciiz "\nThe Median is:\n"
+space:.asciiz " "
+.text
+main:
+j menuSay
+
+readJump:
+jal readArray
+j menuSay
+
+insertionJump:
+ subi $sp,$sp,4
+sw $ra,4($sp)
+jal insertionSort
+lw $ra,4($sp)
+addi $sp,$sp,4
+#print the sorted array
+j menuSay
+
+medianJump:
+jal medianMode
+j menuSay
+
+menuSay:
+li $v0,4
+la $a0,menu  
+syscall 
+
+
+li $v0,5
+syscall
+move $s1,$v0
+
+beq $s1,1,readJump
+beq $s1,2,insertionJump
+beq $s1,3,medianJump
+beq $s1,4,exit
+
+modeFinder:
+#s6 has array adress
+#s5 has length
+
+#s0 max value
+#s1 last value
+#s2 count
+#s3 maxCount
+#s4 i
+#s7 arr[i]
+
+   addi $sp,$sp,-32
+   sw $s0,4($sp)
+   sw $s1,8($sp)
+   sw $s2,12($sp)
+   sw $s3,16($sp)
+   sw $s4,20($sp)
+   sw $s5,24($sp)
+   sw $s6,28($sp)
+   sw $s7,32($sp)
+   
+   
+   lw $s0,0($s6)
+   move $s1,$s0
+   li $s2,1
+   li $s3,1
+   li $s4,1
+    
+   addi $s5,$s5,1
+     
+
+j modeFinderFor
+
+modeFinderFor:
+addi $s6,$s6,4
+subi $s5,$s5,1
+beq $s4,$s5,modeFinderExit
+lw $s7,0($s6)
+beq $s7,$s1,modeFinderFor2
+li $s2,1
+move $s1,$s7
+bgt $s2,$s3,modeFinderFor3
+j modeFinderFor
+
+
+  
+ modeFinderFor2:
+ addi $s2,$s2,1
+bgt $s2,$s3,modeFinderFor3
+j modeFinderFor
+
+modeFinderFor3:
+move $s3,$s2
+move $s0,$s1
+j modeFinderFor
+
+
+modeFinderExit:
+     li $v0, 4
+    la $a0,mode
+    syscall
+
+    li $v0, 1
+    move $a0, $s0
+    syscall
+    
+    lw $s0,4($sp)
+    lw $s1,8($sp)
+    lw $s2,12($sp)
+    lw $s3,16($sp)
+    lw $s4,20($sp)
+    lw $s5,24($sp)
+    lw $s6,28($sp)
+    lw $s7,32($sp)
+    addi $sp,$sp,32
+    
+ jr $ra
+   
+
+
+medianMode:
+addi $sp,$sp,-32
+   
+   #store
+   sw $s0,4($sp)
+   sw $s1,8($sp)
+   sw $s2,12($sp)
+   sw $s3,16($sp)
+   sw $s4,20($sp)
+   sw $s5,24($sp)
+   sw $s6,28($sp)
+   sw $s7,32($sp)
+   
+subi $s5,$s5,1
+div $s5,$s5,2
+li $s0,0
+move $s1,$s6
+li $s3,0
+move $s4,$s5
+j part3Help
+
+part3Help:
+beq $s5,-1,part3Finish
+lw $s4,0($s1)
+addi $s1,$s1,4
+subi $s5,$s5,1
+addi $s3,$s3,1
+j part3Help
+
+part3Finish:
+addi $s3,$s3,1
+move $s5,$s3
+li $v0,4
+la $a0,median
+syscall
+
+li $v0,1
+move $a0,$s4
+syscall
+
+ lw $s0,4($sp)
+    lw $s1,8($sp)
+    lw $s2,12($sp)
+    lw $s3,16($sp)
+    lw $s4,20($sp)
+    lw $s5,24($sp)
+    lw $s6,28($sp)
+    lw $s7,32($sp)
+    addi $sp,$sp,32
+
+j modeFinder
+
+readArray:
+li $v0,4
+la $a0,getIn
+ syscall
+     
+li $v0,5
+syscall
+move $s1,$v0 
+move $s5,$v0
+
+mul $s2,$s1,4
+
+move $a0,$s2
+li $v0,9
+syscall
+move $s4,$v0
+move $s6,$v0
+
+addi $sp,$sp,-32  
+   #store
+   sw $s0,4($sp)
+   sw $s5,24($sp)
+   sw $s6,28($sp)
+
+for:
+beq $s1,0,finish
+li $v0,4
+la $a0,entAr
+syscall
+li $v0,5
+syscall
+move $s3,$v0 
+subi $s1,$s1,1
+blt $s3,0,noAdd
+bgt $s3,100,noAdd
+j addToArray
+
+addToArray:
+li $v0,4
+la $a0,added
+syscall
+sw $s3,0($s4)
+addi $s4,$s4,4
+j for
+
+noAdd:
+li $v0,4
+la $a0,error
+syscall
+j for
+
+finish:
+move $v0,$s6
+move $v1,$s5
+
+    lw $s0,4($sp)
+    lw $s5,24($sp)
+    lw $s6,28($sp)
+    
+    addi $sp,$sp,32
+
+j menuSay
+insertionSort:
+addi $sp,$sp,-32
+   
+   #store
+   sw $s0,4($sp)
+   sw $s1,8($sp)
+   sw $s2,12($sp)
+   sw $s3,16($sp)
+   sw $s4,20($sp)
+   sw $s5,24($sp)
+   sw $s6,28($sp)
+   sw $s7,32($sp)
+   
+li $v0,4
+la $a0,inpart2
+syscall
+
+ move $s0,$s6
+ li $s2,1
+ li $s3,0
+ move $s1,$s5
+ li $s4,0
+move $s7,$s0
+   #s0 = A
+   #s2 = i
+   #s3 = j
+   #s1 = len
+   #s4 = j -1
+   #s5 = A[j-1]
+   #s6 = A[j]
+   #s7 = A
+   while: 
+         #while i < len
+ 	 bge $s2,$s1,end
+ 	  #finding j
+  	   addi $s3,$s2,0
+  	   #finding j - 1
+  	subi $s4,$s3,1
+ 	
+ 	
+  	while2:
+  	        
+                
+                #while j > 0
+  	        ble $s3,0,end2
+  	       
+  		
+  		move $s7,$s0
+  
+  		JMinusOneFinder:
+  			
+                	
+   			beq $s4,-1,fix
+   			lw $s5,0($s7)
+   			subi $s4,$s4,1
+   			addi $s7,$s7,4
+   			j JMinusOneFinder
+   	        fix:
+   	        move $s7,$s0
+   	        #j-1 = j -1
+   	        subi $s4,$s3,1
+   	         JFinder:
+   	        	
+                	
+   	                beq $s3,-1,JMExit
+   			lw $s6,0($s7)
+   			subi $s3,$s3,1
+   			addi $s7,$s7,4
+   			j JFinder
+   		JMExit:
+   		#while A[j-1] > A[j]
+   		ble $s5,$s6,end2
+   		#getting j back
+ 	        addi $s3,$s4,1
+   	        SwapStr:
+   	        
+   	        subi $sp,$sp,4
+                sw $ra,4($sp)
+	        jal	swap
+	        lw $ra,4($sp)
+	        addi $sp,$sp,4
+                
+                
+	        move $s3,$a1
+	        move $s4,$a2
+	       
+	       
+	        subi $s3,$s3,1
+	        subi $s4,$s3,1
+   		j while2
+  
+  end2:
+   
+   
+  addi $s2,$s2,1
+  j while
+  
+  end:
+  
+   
+  move $s5,$s0
+  move $s6,$s1
+  
+  printInOrder:
+
+li $v0,4
+la $a0,space 
+syscall 
+ 
+beq $s6,0,finish2
+
+li $v0,1   #prepare system call
+lw $a0,0($s5)
+syscall
+
+addi $s5,$s5,4
+
+subi $s6,$s6,1
+
+j printInOrder
+
+finish2:
+move $a0,$s0
+move $a1,$s1
+move $s6,$s0
+    lw $s0,4($sp)
+    lw $s1,8($sp)
+    lw $s2,12($sp)
+    lw $s3,16($sp)
+    lw $s4,20($sp)
+    lw $s5,24($sp)
+    lw $s6,28($sp)
+    lw $s7,32($sp)
+    addi $sp,$sp,32
+jr $ra
+
+swap:
+	
+# A program to swap the contents of two elements of an array.
+.text
+move $a0,$s0
+move	$a1, $s3
+move	$a2, $s4
+#============================================
+ move $s3, $a1
+ move $s4, $a2
+ sll $s3, $s3, 2   # $s3= 4 * $s3
+ sll $s4, $s4, 2   # $s4= 4 * $s4
+ add $s3, $s3, $a0 # $s3 points to the array element at index1
+ add $s4, $s4, $a0 # $s4 points to the array element at index2
+# Perform swap.
+ lw $a3, 0($s3)
+ lw $s7, 0($s4) 
+ sw $a3, 0($s4)
+ sw $s7, 0($s3)
+ 
+ jr $ra
+#============================================
+exit:
+li $v0,10
+syscall
+
+

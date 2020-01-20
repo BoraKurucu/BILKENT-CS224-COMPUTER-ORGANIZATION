@@ -1,0 +1,496 @@
+.data 
+menu: .asciiz "\n 1 to Enter matrix size and give values:\n 2 to enter size and give automatic consecutive values\n 3 Display a desired element of the matrix by specifying its row and column number\n 4 Display matrix row by row\n 5 to display trace\n 6 to find reverse sum diagonal\n 7 to see row by row sum\n 8 to see column by column sum\n"
+getIn: .asciiz "\n Enter arrays size N:\n"
+getElement: .asciiz "\n Enter array element:\n"
+getRow: .asciiz "\n Enter row number:\n"
+getCol: .asciiz "\n Enter col number:\n"
+result: .asciiz "\n Your result is:\n"
+newLine: .asciiz "\n"
+space: .asciiz " "
+.text
+main:
+j menuSay
+
+#enablers to use jal
+jumpRead:
+jal readArray
+j menuSay
+
+jumpRead2:
+jal readArray2
+j menuSay
+
+jumpDisplay:
+li $v0,4
+la $a0,getRow
+syscall
+
+#getting i and j
+li $v0,5
+syscall
+move $t0,$v0
+
+li $v0,4
+la $a0,getCol
+syscall
+
+li $v0,5
+syscall
+move $t1,$v0
+
+#putting i and j to a0 and a1, as inputs of the function
+move $a0,$t0
+move $a1,$t1
+
+jal displayEl
+j menuSay
+
+jumpDisplay2:
+jal displayRow
+j menuSay
+
+jumpTrace:
+jal displayTrace
+j menuSay
+
+jumpDiag:
+jal sumDiagonal
+j menuSay
+
+jumpRow:
+jal rowSum
+j menuSay
+
+jumpCol:
+jal colSum
+j menuSay
+
+menuSay:
+li $v0,4
+la $a0,menu
+syscall 
+
+li $v0,5
+syscall
+move $t1,$v0
+
+#these operations are in the same order with th lab
+beq $t1,1,jumpRead
+beq $t1,2,jumpRead2
+beq $t1,3,jumpDisplay
+beq $t1,4,jumpDisplay2
+beq $t1,5,jumpTrace
+beq $t1,6,jumpDiag
+beq $t1,7,jumpRow
+beq $t1,8,jumpCol
+
+#making the matrix,getting N, and getting N * N values 
+readArray:
+li $v0,4
+la $a0,getIn
+syscall
+
+li $v0,5
+syscall
+move $t0,$v0 
+
+#s1 = 	N
+move $s1,$t0
+mul $t0,$t0,$t0
+
+#creating N^2 SPACE
+move $a0,$t0
+li $v0,9
+syscall
+move $s0,$v0
+
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+while:
+
+beq $t0,0,done1
+
+li $v0,4
+la $a0,getElement
+syscall
+
+#get integer from user
+li $v0, 5
+syscall
+
+#put it into array
+sw $v0,0($s0)
+ 
+#increment the memory adress for the next input
+addi $s0,$s0,4
+
+#decrement to finish the loop (i-- in c code)
+subi $t0,$t0,1
+
+j while
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done1:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+jr $ra
+
+#get N, and fill N*N values with consecutive values
+readArray2:
+li $v0,4
+la $a0,getIn
+syscall
+
+li $v0,5
+syscall
+move $t0,$v0 
+
+#s1 = 	N
+move $s1,$t0
+mul $t0,$t0,$t0
+
+move $a0,$t0
+li $v0,9
+syscall
+move $s0,$v0
+
+li $t1,1
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+while2:
+beq $t0,0,done2
+
+
+#put it into array
+sw $t1,0($s0)
+ 
+#increment the memory adress for the next input
+addi $s0,$s0,4
+
+#decrement to finish the loop (i-- in c code)
+subi $t0,$t0,1
+
+#consecutive values
+addi $t1,$t1,1
+
+j while2 
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done2:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+jr $ra
+
+#display the element at the ith row and jth column
+displayEl:
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+
+li $t3,0
+
+#row i
+move $t0,$a0
+#col j
+move $t1,$a1
+#N
+move $t2,$s1
+#(i - 1) x N 
+subi $t0,$t0,1
+mul $t0,$t0,$t2
+#(j - 1) 
+#subi $t1,$t1,1
+#(i - 1) x N + (j - 1) 
+add $t3,$t1,$t0
+
+#result
+li $t4,0
+
+#iterate over array (i - 1) x N + (j - 1) times
+while3:
+beq $t3,0,done3
+lw $t4,0($s0)
+addi $s0,$s0,4
+subi $t3,$t3,1
+j while3
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done3:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+
+li $v0,4
+la $a0,result
+syscall
+
+li $v0,1
+move $a0,$t4
+syscall
+
+#return
+move $v0,$t4
+
+jr $ra
+#displays the matrix row by row
+#algoritm: at every N iteration,print a new line,till N iteration print every element and a space, do it N times.
+displayRow:
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+
+move $t1,$s1
+move $t2,$s1
+move $t0,$s1
+while4:
+beq $t0,0,done4
+
+#traverses the row
+for:
+beq $t1,0,continue
+lw $t4,0($s0)
+addi $s0,$s0,4
+
+li $v0, 1
+move $a0, $t4
+syscall
+
+#print space between every element of the row
+li $v0, 4
+la $a0,space
+syscall
+
+subi $t1,$t1,1
+j for
+
+#at the end of the row,going to print a new line
+continue:
+
+li $v0, 4
+la $a0,newLine
+syscall
+
+subi $t0,$t0,1
+move $t1,$t2
+
+j while4
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done4:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+jr $ra
+
+#display the trace,diagonal elements
+#algoritm:i starts from 1,print the i th element, than move to the end of the row,add 1 to i,than print i th element of the new row, do it N times.
+displayTrace:
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+
+move $t7,$s1
+subi $s1,$s1,1
+move $t1,$s1
+mul $t1,$t1,$t1
+li $t6,0
+
+#traversing n times,while5
+while5:
+beq $t6,$t7,done5
+
+move $t0,$s1
+
+
+move $t5,$t6
+addi $t5,$t5,1
+
+lw $t4,0($s0)
+li $v0, 1
+move $a0, $t4
+syscall
+
+li $v0, 4
+la $a0,space
+syscall
+#those for loops used to go to end of the row, and than go the necessary location in the new row
+for20:
+beq $t0,-1,for30
+addi $s0,$s0,4
+subi $t0,$t0,1
+j for20
+for30:
+beq $t5,0,cont30
+addi $s0,$s0,4
+subi $t5,$t5,1
+j for30
+
+cont30:
+
+addi $t6,$t6,1
+subi $s1,$s1,1
+j while5
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done5:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+jr $ra
+
+#find sum and display the reverse diagonal traversal of a matrix
+#algoritm:initially i starts from N,add i th element of the row to sum,move to new row, decrease i by 1,repeat N times
+sumDiagonal:
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+
+#sum
+li $t6,0
+move $t0,$s1
+move $t3,$s1
+#repeating  N times
+while6:
+beq $s1,0,done6
+move $t0,$s1
+move $t5,$t0
+addi $t5,$t5,1
+#those for loops ro find the i th element,moving to the end of the row
+for3:
+bge $t5,$t3,for2
+addi $s0,$s0,4
+addi $t5,$t5,1
+j for3
+
+for2:
+beq $t0,0,cont
+lw $t4,0($s0)
+addi $s0,$s0,4
+subi $t0,$t0,1
+j for2
+cont:
+add $t6,$t6,$t4
+subi $s1,$s1,1
+j while6
+
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done6:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+
+li $v0, 4
+la $a0,result
+syscall
+
+li $v0, 1
+move $a0, $t6
+syscall
+
+move $v0,$t6
+
+jr $ra
+
+#find sum of the matrix by traversing row by row
+#algoritm:traverse matrix by N times N times, and add the elements to the sum
+rowSum:
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+
+mul $t0,$s1,$s1
+li $t1,0
+
+while7:
+beq $t0,0,done7
+
+lw $t4,0($s0)
+addi $s0,$s0,4
+add $t1,$t1,$t4
+subi $t0,$t0,1
+j while7
+
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done7:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+
+li $v0, 4
+la $a0,result
+syscall
+
+li $v0, 1
+move $a0, $t1
+syscall
+
+move $v0,$t1
+
+jr $ra
+
+#finding the sum of the columns by doing column by column by traversal
+#algorithm i starts from 1, print i th element,move to the next row,repeat N times,than,move to the next column and repeat the same process until all columns are traversed.
+colSum:
+subi $sp,$sp,8
+sw $s0,4($sp)
+sw $s1,8($sp)
+
+move $t0,$s0
+
+move $t1,$s1
+subi $t4,$s1,0
+
+li $t2,0
+li $t5,0
+#getting the ith element, adding it to the sum
+for5:
+beq $t4,0,go
+lw $t3,0($s0)
+add $t2,$t2,$t3
+move $t1,$s1
+for6:
+#finding the i th element
+beq $t1,0,cont3
+addi $s0,$s0,4
+subi $t1,$t1,1
+j for6
+cont3:
+subi $t4,$t4,1
+j for5
+
+go:
+addi $t5,$t5,1
+move $t6,$t5
+#t5 is i, if it >= N, than all the diagonals are print than it is done
+bge $t5,$s1,done8
+move $s0,$t0
+for8:
+beq $t6,0,cont4
+addi $s0,$s0,4
+subi $t6,$t6,1
+j for8
+cont4:
+j prepare
+
+#getting ready to move to the next column
+prepare:
+move $t1,$s1
+subi $t4,$s1,0
+j for5
+
+#getting old values for use of other functions,s0 is arrays adress, s1 is N
+done8:
+lw $s0,4($sp)
+lw $s1,8($sp)
+addi $sp,$sp,8
+
+li $v0, 4
+la $a0,result
+syscall
+
+li $v0, 1
+move $a0, $t2
+syscall
+
+move $v0,$t2
+
+jr $ra
